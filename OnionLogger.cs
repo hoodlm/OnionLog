@@ -27,6 +27,10 @@ public class OnionLogger {
      *  This is purely for convenience - under normal usage, it is probably a
      *  better practice to create your own wrapper class to hold a shared
      *  OnionLogger instance.
+     * 
+     *  In particular, this should not be used in Unity because static objects
+     *  are not necessarily destructed when stopping play - you may have to
+     *  actually close the Unity Editor to flush everything from the file.
      */
     public static OnionLogger globalLog;
     
@@ -45,6 +49,26 @@ public class OnionLogger {
     
     /// The logging level of an OnionLogger instance.
     public LoggingLevels LoggingLevel;
+
+	/** How often to flush output to the stream (i.e. how often to write to the
+     *  file). This can be set higher to decrease the frequency of disk access,
+     *  since the underlying StreamWriter.flush() is a blocking method.
+     * 
+     *  From my tests, high frequency writes tend to perform best with a value
+     *  of around 50-100 milliseconds. This was tested on a mobile HDD, so
+     *  different values may work better for SSDs or other storage media.
+	 * 
+	 *	If this is set to 0, the logger will flush after every write.
+	 *	Default value is 100 milliseconds.
+	 */ 
+	public long FlushFrequencyInMilliseconds = 100;
+
+	/**	Used in conjunction with FlushFrequencyInMilliseconds to determine if 
+     *  the writer should flush.
+     */
+	private long timeOfLastFlush = 0;
+
+	private static readonly DateTime BEGINNING_OF_TIME = new DateTime(1970,1,1);
 
     /// The StreamWriter used to write to the logfile.
     private readonly StreamWriter writer;
@@ -381,14 +405,20 @@ public class OnionLogger {
     
     /**
      *  Write a string to the log file.
-     *  Currently, this naively flushes the StreamWriter immediately after
-     *  writing. Eventually this should be adjusted to flush less frequently
-     *  for performance reasons (since flush is not asyncronous).
      */
     private void WriteLine(string s)
     {
-        writer.WriteLine(s);
-        writer.Flush();
+		writer.WriteLine(s);
+		if (FlushFrequencyInMilliseconds <= 0) {
+			writer.Flush();
+		} else {
+			long unixTimeMilliseconds = 
+                (long)(DateTime.Now - BEGINNING_OF_TIME).TotalMilliseconds;
+			if ((unixTimeMilliseconds - this.timeOfLastFlush) >= FlushFrequencyInMilliseconds) {
+				this.timeOfLastFlush = unixTimeMilliseconds;
+				writer.Flush();
+			}
+		}
     }
     
     /**
@@ -409,6 +439,10 @@ public class OnionLogger {
                           DateTime.Now.Second);
         return (timestamp + ".txt");
     }
+
+	~OnionLogger() {
+		writer.Close();
+	}
 
     /**
      *  Each LogLayer represents a new hierarchical organizational level in the
