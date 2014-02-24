@@ -1,0 +1,7 @@
+If you are using OnionLog in Unity, you should use the UnityOnionLoggerWrapper script for initializing the globalLog. As long as this script is a component on a GameObject that is present throughout a scene, then the shared singleton logger instance OnionLog.globalLog will be properly initialized when the scene is loaded and properly closed when the scene ends.
+
+You can import the OLUnityWrapper.unitypackage into your project for a quick set-up: Just import the package (Assets -> Import Package -> Custom Package...) and drop the Unity3DOnionLoggerInstance prefab into your scene, and you're done.
+
+You should be able log from just about anywhere, except in Awake() and OnDestroy().
+
+Remember that OnionLogger is not thread-safe. This is generally not a problem in Unity (since all MonoBehaviour scripts are run in a single thread), but if you are creating your own threads, you should create a new instance of OnionLogger with a separate log file for each thread.
