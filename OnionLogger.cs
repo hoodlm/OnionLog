@@ -20,18 +20,6 @@ using System.Collections.Generic;
  *  (C) 2014 Logan M Hood
  */
 public class OnionLogger {
-    
-    /**
-     * Static initialization block to set the millisecondsPerTick constant.
-     */
-    static OnionLogger() {
-        millisecondsPerTick = 1000.0 / (double)Stopwatch.Frequency;
-    }
-    
-    /**
-     *  A useful constant for converting from ticks to milliseconds.
-     */
-    private static double millisecondsPerTick;
 
     /** A shared OnionLogger instance that can be used between multiple classes.
      *  You will have to instantiate it first.
@@ -181,6 +169,16 @@ public class OnionLogger {
      */
     private class LogLayer {
 
+       /**
+        *   Static initialization block to set the millisecondsPerTick constant.
+        */
+        static LogLayer() {
+            millisecondsPerTick = 1000.0 / (double)Stopwatch.Frequency;
+        }
+        
+        /// A useful constant for converting from ticks to milliseconds.
+        private static double millisecondsPerTick;
+        
         /// The name used to identify this LogLayer.
         private readonly string name;
 
